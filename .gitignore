@@ -93,5 +93,3 @@ celerybeat-schedule
 .DS_Store
 Thumbs.db
 
-# Your API Key or sensitive files (create a file to store keys separately)
-youtube_fetcher.py
