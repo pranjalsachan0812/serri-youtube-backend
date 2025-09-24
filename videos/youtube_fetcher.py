@@ -1,5 +1,5 @@
 import os
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from googleapiclient.discovery import build
 from dotenv import load_dotenv
 from .models import Video
@@ -10,6 +10,7 @@ load_dotenv()
 YOUTUBE_API_KEY = os.getenv('YOUTUBE_API_KEY')
 SEARCH_QUERY = 'cricket'
 
+
 def fetch_latest_videos():
     if not YOUTUBE_API_KEY:
         raise ValueError("YouTube API key not found. Set YOUTUBE_API_KEY in your environment or .env file.")
@@ -17,7 +18,13 @@ def fetch_latest_videos():
     youtube = build('youtube', 'v3', developerKey=YOUTUBE_API_KEY)
 
     latest_video = Video.objects.order_by('-published_at').first()
-    published_after = latest_video.published_at.isoformat() if latest_video else (datetime.utcnow() - timedelta(days=1)).isoformat()
+    if latest_video:
+        published_after = latest_video.published_at.isoformat()
+        if not published_after.endswith('Z') and '+' not in published_after:
+            published_after += 'Z'
+    else:
+        # Use timezone-aware datetime with 'Z'
+        published_after = (datetime.now(timezone.utc) - timedelta(days=1)).replace(microsecond=0).isoformat()
 
     request = youtube.search().list(
         q=SEARCH_QUERY,
